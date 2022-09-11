@@ -1,25 +1,24 @@
 #ifndef __WINUIHANDLER_H__
 #define __WINUIHANDLER_H__
 
-using namespace pfc;
+using TreeItem = HTREEITEM;
+using Handle = HWND;
+using pfc::string8;
 
-typedef HTREEITEM TreeItem;
-typedef HWND Handle;
-
-class TreeView {
+class TreeView
+{
 private:
 	Handle m_handle;
 
 public:
-	TreeView() : m_handle(NULL) {
-	}
+	TreeView() : m_handle(NULL) {}
 
 	void setHandle(Handle handle);
-	Handle getHandle();
+	Handle getHandle() const;
 
 	void clear();
-	TreeItem addItem(TreeItem parent, string8& item);
-	TreeItem getSelectedItem();
+	TreeItem addItem(TreeItem parent, const string8& item);
+	TreeItem getSelectedItem() const;
 };
 
 

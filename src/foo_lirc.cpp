@@ -2,6 +2,8 @@
 #include "cfg_action.h"
 #include "winuihandler.h"
 
+using namespace pfc;
+
 DECLARE_COMPONENT_VERSION(
 	// component name
 	"LIRC Client",
