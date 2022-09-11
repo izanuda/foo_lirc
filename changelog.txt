@@ -1,0 +1,35 @@
+version 0.1 - levsch:
+   - Initial release
+version 0.2 (2004-03-08 - phi):
+   - New UI
+   - Changed config implementation for inherent support of all foobar main menu commands
+   - Moved CWaitingTalkingSocket class to CWaitingTalkingSocket.h
+   - Added some synchronisation between threads
+   - Fixed main thread pause on socket->open failure
+version 0.2.1 (2004-05-29 - phi):
+   - now gets main window handle the correct way
+   - removed useless sync code (after bothering to read the PostMessage docs)
+   - other bugfixes I don't remember doing
+version 0.2.2 (2004-06-04 - phi):
+   - added configurable repeat attribute
+   - fixed infinite loop when lirc is closed unexpectedly
+version 0.2.3 (2004-06-29 - phi):
+   - fixed broken logic wrt enable checkbox and connection failure
+   - better connection status update method in config
+version 0.3 (2004-08-07 - phi):
+   - large rewrite
+   - removed WFC build requirement (CTalkingSocket)
+version 0.3.1 (2004-08-08 - phi):
+   - added support for "context/now playing" commands
+   - minor ui improvements
+version 0.4 (2006-05-06 - wazoo):
+   - ported code from 0.8.X SDK to 0.9.X
+   - removed support for "context/now playing" commands (when are they generated???)
+   - minor ui improvements
+version 0.4.1 (2006-05-15 - wazoo):
+   - fixed the location of the lirc menu in prefs menu (thus fixing indirectly the dependence on other Tools plugins)
+version 0.5.0 (2007-06-28 - wazoo):
+   - made plugin gather all avaiable actions (both main and context-dependent)
+   - modified the actions UI to display the actions hierarchically as a tree
+version 0.5.0a (2007-07-02 - wazoo):
+   - fixed the action assignment issues
