@@ -72,7 +72,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>user32.lib;Ws2_32.lib;shared-Win32.lib;foobar2000_SDK.lib;foobar2000_sdk_helpers.lib;pfc.lib;foobar2000_component_client.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>user32.lib;Ws2_32.lib;shared-Win32.lib;foobar2000_SDK.lib;foobar2000_sdk_helpers.lib;pfc.lib;foobar2000_component_client.lib;libPPUI.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>.\lib;$(OutDir);$(FOOBAR_SDK)\foobar2000\shared;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
