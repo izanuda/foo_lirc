@@ -19,7 +19,7 @@ DECLARE_COMPONENT_VERSION(
 	"https://github.com/izanuda/foo_lirc\n\n"
 	"Original version copyright (C) 2004, Lev Shamardin\n"
 	"http://sourceforge.net/projects/foolirc\n"
-	)
+)
 
 #define WM_REMOTE_KEY WM_USER+1
 #define WM_SOCKET WM_USER+10
@@ -48,7 +48,7 @@ static SOCKET lirc_socket = INVALID_SOCKET;
 
 static cfg_action g_actions(guid_cfg_actions);
 
-static LRESULT CALLBACK LircWindowProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp);
+static LRESULT CALLBACK LircWindowProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp);
 
 HWND create_message_window()
 {
@@ -57,55 +57,55 @@ HWND create_message_window()
 	static bool g_inited;
 	static const char g_class_name[] = "foo_lirc.dll window class";
 	pfc::stringcvt::string_os_from_utf8 os_class_name(g_class_name);
-	if (!g_inited)
+	if(!g_inited)
 	{
 		g_inited = true;
 		WNDCLASS wc;
-		memset(&wc,0,sizeof(wc));
+		memset(&wc, 0, sizeof(wc));
 		wc.lpfnWndProc = LircWindowProc;
 		wc.hInstance = core_api::get_my_instance();
 		wc.lpszClassName = os_class_name;
 		RegisterClass(&wc);
 	}
-	if (!handle)
+	if(!handle)
 	{
-		handle = uCreateWindowEx(0,g_class_name,"foo_lirc",WS_POPUP,0,0,0,0,core_api::get_main_window(),0,core_api::get_my_instance(),0);
+		handle = uCreateWindowEx(0, g_class_name, "foo_lirc", WS_POPUP, 0, 0, 0, 0, core_api::get_main_window(), 0, core_api::get_my_instance(), 0);
 	}
 
-	_ASSERTE (handle != NULL);
+	_ASSERTE(handle != NULL);
 
-	ShowWindow(handle,SW_SHOWNOACTIVATE);
+	ShowWindow(handle, SW_SHOWNOACTIVATE);
 	return handle;
 }
 
 bool open_socket(HWND message_window)
 {
 	/* create our socket */
-	_ASSERTE (lirc_socket == INVALID_SOCKET);
-	lirc_socket = socket (AF_INET,SOCK_STREAM, 0);
-	if (lirc_socket == INVALID_SOCKET)
+	_ASSERTE(lirc_socket == INVALID_SOCKET);
+	lirc_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if(lirc_socket == INVALID_SOCKET)
 	{
-		console::error ("Couldn't create socket.");
+		console::error("Couldn't create socket.");
 		return false;
 	}
 
 	/* make the socket asynchronous */
-	if (WSAAsyncSelect(lirc_socket, message_window, WM_SOCKET, 
+	if(WSAAsyncSelect(lirc_socket, message_window, WM_SOCKET,
 		FD_CONNECT | FD_READ | FD_CLOSE) != 0)
 	{
-		console::error ("WSAAsyncSelect() failed.");
+		console::error("WSAAsyncSelect() failed.");
 		return false;
 	}
 
 	/* resolve dns if necessary */
-	u_long addr = inet_addr (cfg_lircaddr.get_ptr());
-	if (addr == INADDR_NONE)
+	u_long addr = inet_addr(cfg_lircaddr.get_ptr());
+	if(addr == INADDR_NONE)
 	{
 		/* should be using the non-blocking WSAAsyncGetHostByName() here */
-		hostent* h = gethostbyname (cfg_lircaddr.get_ptr());
-		if (!h) 
+		hostent* h = gethostbyname(cfg_lircaddr.get_ptr());
+		if(!h)
 		{
-			console::error ("Couldn't resolve lirc server address.");
+			console::error("Couldn't resolve lirc server address.");
 			return false;
 		}
 		addr = *((u_long*)h->h_addr_list[0]);
@@ -114,15 +114,15 @@ bool open_socket(HWND message_window)
 	/* connect to the server */
 	struct sockaddr_in dest_addr;
 	dest_addr.sin_family = AF_INET;
-	dest_addr.sin_port = htons (cfg_lircport);
+	dest_addr.sin_port = htons(cfg_lircport);
 	dest_addr.sin_addr.s_addr = addr;
 	memset(&(dest_addr.sin_zero), '\0', 8);
-	
-	if (connect(lirc_socket, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr))==SOCKET_ERROR)
+
+	if(connect(lirc_socket, (struct sockaddr*)&dest_addr, sizeof(struct sockaddr)) == SOCKET_ERROR)
 	{
-		if (WSAGetLastError() != WSAEWOULDBLOCK)
+		if(WSAGetLastError() != WSAEWOULDBLOCK)
 		{
-			console::error ("Socket error.");
+			console::error("Socket error.");
 			return false;
 		}
 	}
@@ -136,105 +136,105 @@ bool open_socket(HWND message_window)
 	return true;
 }
 
-void close_socket ()
+void close_socket()
 {
-	if (lirc_socket != INVALID_SOCKET)
+	if(lirc_socket != INVALID_SOCKET)
 	{
-		closesocket (lirc_socket);
+		closesocket(lirc_socket);
 		lirc_socket = INVALID_SOCKET;
 	}
 }
 
 void disconnect_socket()
 {
-	if (lirc_socket != INVALID_SOCKET)
+	if(lirc_socket != INVALID_SOCKET)
 	{
 		shutdown(lirc_socket, 0x01/*SD_SEND*/);
 	}
 }
 
-bool init_windows_sockets ()
+bool init_windows_sockets()
 {
 	WSADATA w;
-	if (WSAStartup (0x0202, &w) != 0)
+	if(WSAStartup(0x0202, &w) != 0)
 	{
-		console::error ("WSAStartup() failed");
+		console::error("WSAStartup() failed");
 		return false;
 	}
-	if (w.wVersion != 0x0202)
+	if(w.wVersion != 0x0202)
 	{
-		console::error ("Wrong WinSock version");
+		console::error("Wrong WinSock version");
 		WSACleanup();
 		return false;
 	}
 	return true;
 }
 
-void deinit_windows_sockets ()
+void deinit_windows_sockets()
 {
 	WSACleanup();
 }
 
 void start_lirc()
 {
-	_ASSERTE (core_api::assert_main_thread());
-	if (!core_api::assert_main_thread()) return;
+	_ASSERTE(core_api::assert_main_thread());
+	if(!core_api::assert_main_thread()) return;
 
 	msg_window = create_message_window();
 
-	if (!open_socket (msg_window))
+	if(!open_socket(msg_window))
 	{
 		close_socket();
 	}
 }
 
-static LRESULT CALLBACK LircWindowProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
+static LRESULT CALLBACK LircWindowProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-	switch (msg)
+	switch(msg)
 	{
-	case WM_SOCKET:
+		case WM_SOCKET:
 		{
 			switch(WSAGETSELECTEVENT(lp))
 			{
-			case FD_CONNECT:
+				case FD_CONNECT:
 				{
 					DEBUG("FD_CONNECT");
-					if (WSAGETSELECTERROR(lp))
+					if(WSAGETSELECTERROR(lp))
 					{
 						close_socket();
 
-						console::warning ("Could not connect to lirc server.");
-						if (config_window)
-							PostMessage (config_window,msg,0,FD_CLOSE);
+						console::warning("Could not connect to lirc server.");
+						if(config_window)
+							PostMessage(config_window, msg, 0, FD_CLOSE);
 					}
 					else
 					{
 						DEBUG("Connected to server");
-						if (config_window)
-							PostMessage (config_window,msg,wp,lp);
+						if(config_window)
+							PostMessage(config_window, msg, wp, lp);
 					}
 				}
 				break;
-			case FD_READ:
+				case FD_READ:
 				{
 					DEBUG("FD_READ");
 					constexpr size_t BUF_SIZE = 8192;
 
 					string8 buf;
-					int bytes_recv = recv(wp, (char *)string_buffer(buf,BUF_SIZE), BUF_SIZE, 0);
-					if (bytes_recv != 0)
+					int bytes_recv = recv(wp, (char*)string_buffer(buf, BUF_SIZE), BUF_SIZE, 0);
+					if(bytes_recv != 0)
 					{
-						DEBUG(string_printf("%d bytes received",bytes_recv));
-						DEBUG(string_printf("data: %s",buf.get_ptr()));
+						DEBUG(string_printf("%d bytes received", bytes_recv));
+						DEBUG(string_printf("data: %s", buf.get_ptr()));
 
 						unsigned int repeat_count;
 						char keyname[BUF_SIZE];
 						char remotename[BUF_SIZE];
 
-						if(sscanf(buf.get_ptr(),"%*I64x %x %s %[^\n]",&repeat_count,keyname,remotename) == 3)
+						if(sscanf(buf.get_ptr(), "%*I64x %x %s %[^\n]", &repeat_count, keyname, remotename) == 3)
 						{
-							string8 key_id = string_printf("%s (%s)",keyname,remotename);
-							if (config_window)
+							string8 key_id = string_printf("%s (%s)", keyname, remotename);
+							if(config_window)
 							{
 								if(repeat_count == 0)
 								{
@@ -254,18 +254,18 @@ static LRESULT CALLBACK LircWindowProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 #undef BUF_SIZE
 				}
 				break;
-			case FD_CLOSE:
+				case FD_CLOSE:
 				{
 					DEBUG("FD_CLOSE");
-					if (config_window)
-						PostMessage (config_window,msg,wp,lp);
+					if(config_window)
+						PostMessage(config_window, msg, wp, lp);
 
 					char buf[8192];
 					int rv;
 					do
 					{
-						rv = recv (lirc_socket, buf, 1024, 0);
-					} while (rv != 0 && rv != SOCKET_ERROR);
+						rv = recv(lirc_socket, buf, 1024, 0);
+					} while(rv != 0 && rv != SOCKET_ERROR);
 
 					close_socket();
 				}
@@ -274,26 +274,26 @@ static LRESULT CALLBACK LircWindowProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 		}
 		return 1;
 	} /* case: WM_SOCKET */
-	return uDefWindowProc (wnd,msg,wp,lp);
+	return uDefWindowProc(wnd, msg, wp, lp);
 }
 
 
-class initquit_winlirc : public initquit 
+class initquit_winlirc : public initquit
 {
-	virtual void on_init() 
+	virtual void on_init()
 	{
-		if (cfg_enabled) 
+		if(cfg_enabled)
 		{
-			if (init_windows_sockets())
+			if(init_windows_sockets())
 				start_lirc();
 		}
 	}
 
-	virtual void on_quit() 
+	virtual void on_quit()
 	{
 		disconnect_socket();
 		deinit_windows_sockets();
-		DestroyWindow (msg_window);
+		DestroyWindow(msg_window);
 	}
 };
 
@@ -302,9 +302,11 @@ static initquit_factory_t< initquit_winlirc > foo_initquit;
 static TreeView action_listbox_wnd;
 static HWND listview_wnd;
 
-class config_winlirc : public preferences_page {
+class config_winlirc : public preferences_page
+{
 private:
-	struct command_item {
+	struct command_item
+	{
 		ptr_list_t<command_item> subitems;
 
 		string8 name;
@@ -317,9 +319,11 @@ private:
 
 			// now make those subitems that have children sort themselves
 			size_t count = subitems.get_count();
-			for (size_t i = 0; i < count; i++) {
+			for(size_t i = 0; i < count; i++)
+			{
 				command_item* current = subitems.get_item(i);
-				if (current->subitems.get_count() > 0) {
+				if(current->subitems.get_count() > 0)
+				{
 					current->sortItems();
 				}
 			}
@@ -327,36 +331,43 @@ private:
 
 		command_item* find(string8& byName) {
 			size_t count = subitems.get_count();
-			for (size_t i = 0; i < count; i++) {
+			for(size_t i = 0; i < count; i++)
+			{
 				command_item* current = subitems.get_item(i);
-				if (!stricmp_utf8(current->name, byName)) {
+				if(!stricmp_utf8(current->name, byName))
+				{
 					return current;
 				}
 			}
 			return NULL;
 		}
 
-		static int compare_by_name(const command_item * p_item1, const command_item * p_item2) {
+		static int compare_by_name(const command_item* p_item1, const command_item* p_item2) {
 			return stricmp_utf8(p_item1->name, p_item2->name);
 		}
 	};
 
-	static void findMainMenuName(GUID & parent, pfc::string8 & out) {
+	static void findMainMenuName(GUID& parent, pfc::string8& out) {
 		service_enum_t<mainmenu_group> e;
 		service_ptr_t<mainmenu_group> ptr;
 
-		while (e.next(ptr)) {
-			if (parent != ptr->get_guid()) {
+		while(e.next(ptr))
+		{
+			if(parent != ptr->get_guid())
+			{
 				continue;
 			}
 
 			// TODO: extract the name (find the other way - for now only popup items work !!!)
 
 			service_ptr_t<mainmenu_group_popup> popup;
-			if (ptr->service_query_t(popup)) {
+			if(ptr->service_query_t(popup))
+			{
 				popup->get_display_string(out);
 				return;
-			} else {
+			}
+			else
+			{
 				// console::warning("!!!! not popup");
 			}
 		}
@@ -370,23 +381,30 @@ private:
 		service_enum_t<mainmenu_commands> e;
 		service_ptr_t<mainmenu_commands> ptr;
 
-		while (e.next(ptr)) {
+		while(e.next(ptr))
+		{
 			command_item* parent = NULL;
 
 			const t_size count = ptr->get_command_count();
-			for(t_size i = 0; i < count; i++) {
-				if (i == 0) {
+			for(t_size i = 0; i < count; i++)
+			{
+				if(i == 0)
+				{
 					string8 currentParentName;
 					findMainMenuName(ptr->get_parent(), currentParentName);
 
 					// see whether such item already exists inside the parent
 					parent = contextActions->find(currentParentName);
-					if (! parent) {
+					if(!parent)
+					{
 						// check for items without a parent, such children are added 
 						// directly to the context actions root
-						if (currentParentName.length() == 0) {
+						if(currentParentName.length() == 0)
+						{
 							parent = contextActions;
-						} else {
+						}
+						else
+						{
 							parent = new command_item();
 							contextActions->subitems.add_item(parent);
 							parent->name = currentParentName;
@@ -419,23 +437,30 @@ private:
 		service_enum_t<contextmenu_item> enumer;
 		service_ptr_t<contextmenu_item> ptr;
 
-		while (enumer.next(ptr)) {
+		while(enumer.next(ptr))
+		{
 			command_item* parent = NULL;
 
 			const t_size count = ptr->get_num_items();
-			for (t_size i = 0; i < count; i++) {
-				if (i == 0) {
+			for(t_size i = 0; i < count; i++)
+			{
+				if(i == 0)
+				{
 					string8 currentParentName;
 					ptr->get_item_default_path(i, currentParentName);
 
 					// see whether such item already exists inside the parent
 					parent = contextActions->find(currentParentName);
-					if (! parent) {
+					if(!parent)
+					{
 						// check for items without a parent, such children are added 
 						// directly to the context actions root
-						if (currentParentName.length() == 0) {
+						if(currentParentName.length() == 0)
+						{
 							parent = contextActions;
-						} else {
+						}
+						else
+						{
 							parent = new command_item();
 							contextActions->subitems.add_item(parent);
 							parent->name = currentParentName;
@@ -462,12 +487,14 @@ private:
 
 	static void addItems(command_item& item, TreeItem parent) {
 		TreeItem currentParent = parent;
-		if (item.name.length() > 0) {
+		if(item.name.length() > 0)
+		{
 			currentParent = action_listbox_wnd.addItem(parent, item.name);
 		}
 
 		size_t count = item.subitems.get_count();
-		for (size_t i = 0; i < count; i++) {
+		for(size_t i = 0; i < count; i++)
+		{
 			command_item& current = *item.subitems.get_item(i);
 			addItems(current, currentParent);
 		}
@@ -475,7 +502,8 @@ private:
 
 public:
 
-	static void update_action_list() {
+	static void update_action_list()
+	{
 		// start afresh
 		action_listbox_wnd.clear();
 
@@ -496,9 +524,9 @@ public:
 		LVITEM item;
 		ListView_DeleteAllItems(listview_wnd);
 		int num_actions = g_actions.get_count();
-		for(int i=0;i<num_actions;i++) 
+		for(int i = 0; i < num_actions; i++)
 		{
-			action * a = g_actions[i];
+			action* a = g_actions[i];
 			ZeroMemory(&item, sizeof(item));
 			item.mask = LVIF_TEXT | LVIF_PARAM;
 			item.lParam = i;
@@ -525,33 +553,33 @@ public:
 	static void toggle_selected_repeatable()
 	{
 		int idx = ListView_GetSelectionMark(listview_wnd);
-		if (idx != -1)
+		if(idx != -1)
 		{
 			LVITEM item;
 			ZeroMemory(&item, sizeof(item));
 			item.mask = LVIF_PARAM;
 			item.iItem = idx;
 			ListView_GetItem(listview_wnd, &item);
-			
+
 			g_actions.toggle_repeatable_by_idx(item.lParam);
 			update_listview(listview_wnd);
-			ListView_SetItemState(listview_wnd,idx,LVIS_FOCUSED|LVIS_SELECTED,LVIS_FOCUSED|LVIS_SELECTED);
-			ListView_EnsureVisible(listview_wnd,idx,0);
+			ListView_SetItemState(listview_wnd, idx, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+			ListView_EnsureVisible(listview_wnd, idx, 0);
 		}
 	}
-	static void enable_server_controls (BOOL en)
+	static void enable_server_controls(BOOL en)
 	{
-		EnableWindow (GetDlgItem (config_window,IDC_SERVER_LABEL), en);
-		EnableWindow (GetDlgItem (config_window,IDC_SERVER), en);
-		EnableWindow (GetDlgItem (config_window,IDC_PORT_LABEL), en);
-		EnableWindow (GetDlgItem (config_window,IDC_PORT), en);
-		EnableWindow (GetDlgItem (config_window,IDC_CONNECT), en);
+		EnableWindow(GetDlgItem(config_window, IDC_SERVER_LABEL), en);
+		EnableWindow(GetDlgItem(config_window, IDC_SERVER), en);
+		EnableWindow(GetDlgItem(config_window, IDC_PORT_LABEL), en);
+		EnableWindow(GetDlgItem(config_window, IDC_PORT), en);
+		EnableWindow(GetDlgItem(config_window, IDC_CONNECT), en);
 	}
 
-	static int ListView_FindItemByKeyName (const pfc::string_base& key)
+	static int ListView_FindItemByKeyName(const pfc::string_base& key)
 	{
 		LVFINDINFO fi;
-		ZeroMemory(&fi,sizeof(fi));
+		ZeroMemory(&fi, sizeof(fi));
 
 #ifdef UNICODE
 		pfc::wstringLite wide_key = wideFromUTF8(key.get_ptr());
@@ -560,27 +588,27 @@ public:
 		fi.psz = key.c_str();
 #endif
 		fi.flags = LVFI_STRING;
-		return ListView_FindItem(listview_wnd,-1,&fi);
+		return ListView_FindItem(listview_wnd, -1, &fi);
 	}
 
-	static INT_PTR CALLBACK ConfigProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
+	static INT_PTR CALLBACK ConfigProc(HWND wnd, UINT msg, WPARAM wp, LPARAM lp)
 	{
 		static HWND status_wnd;
 
-		switch(msg) 
+		switch(msg)
 		{
 			case WM_INITDIALOG:
 			{
-				action_listbox_wnd.setHandle(GetDlgItem(wnd,IDC_LB_ACTIONS));
-				listview_wnd = GetDlgItem(wnd,IDC_LISTVIEW);
-				status_wnd = GetDlgItem(wnd,IDC_STAT);
+				action_listbox_wnd.setHandle(GetDlgItem(wnd, IDC_LB_ACTIONS));
+				listview_wnd = GetDlgItem(wnd, IDC_LISTVIEW);
+				status_wnd = GetDlgItem(wnd, IDC_STAT);
 				config_window = wnd;
-				
+
 				{
 					LVCOLUMN col;
 					ListView_SetExtendedListViewStyle(listview_wnd,
 						LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-					
+
 					ZeroMemory(&col, sizeof(col));
 					col.mask = LVCF_TEXT;
 					col.pszText = TEXT("Button");
@@ -595,35 +623,35 @@ public:
 					ListView_SetColumnWidth(listview_wnd, 2, 90);
 				}
 				uSetDlgItemText(wnd, IDC_SERVER, cfg_lircaddr.get_ptr());
-				SetDlgItemInt(wnd, IDC_PORT, cfg_lircport,false);
+				SetDlgItemInt(wnd, IDC_PORT, cfg_lircport, false);
 				uSendDlgItemMessage(wnd, IDC_ENABLED, BM_SETCHECK, cfg_enabled, 0);
 
-				if (lirc_socket != INVALID_SOCKET)
+				if(lirc_socket != INVALID_SOCKET)
 				{
 					uSetWindowText(status_wnd,
 						string_printf("Connected to %s:%d",
-						cfg_lircaddr.get_ptr(),(int) cfg_lircport).get_ptr()
-						);
-					uSetWindowText (GetDlgItem (wnd,IDC_CONNECT),"Disconnect");
+							cfg_lircaddr.get_ptr(), (int)cfg_lircport).get_ptr()
+					);
+					uSetWindowText(GetDlgItem(wnd, IDC_CONNECT), "Disconnect");
 				}
 				else
 				{
-					uSetWindowText (GetDlgItem (wnd,IDC_CONNECT),"Connect");
-					uSetWindowText(status_wnd,"Not connected.");
+					uSetWindowText(GetDlgItem(wnd, IDC_CONNECT), "Connect");
+					uSetWindowText(status_wnd, "Not connected.");
 				}
 
 				update_action_list();
 				update_listview(listview_wnd);
 
-				enable_server_controls (!!cfg_enabled);
-				
+				enable_server_controls(!!cfg_enabled);
+
 				return TRUE;
 			}
 			case WM_NOTIFY:
-				switch (((LPNMHDR)lp)->idFrom)
+				switch(((LPNMHDR)lp)->idFrom)
 				{
 					case IDC_LISTVIEW:
-						switch (((LPNMHDR)lp)->code) 
+						switch(((LPNMHDR)lp)->code)
 						{
 							case NM_DBLCLK:
 								toggle_selected_repeatable();
@@ -632,9 +660,9 @@ public:
 							{
 								LVHITTESTINFO info;
 								info.pt = ((LPNMLISTVIEW)lp)->ptAction;
-								ListView_HitTest (listview_wnd, &info);
+								ListView_HitTest(listview_wnd, &info);
 
-								if (info.flags & LVHT_ONITEMLABEL)
+								if(info.flags & LVHT_ONITEMLABEL)
 								{
 									LVITEM item;
 									ZeroMemory(&item, sizeof(item));
@@ -642,14 +670,14 @@ public:
 									item.iItem = info.iItem;
 									ListView_GetItem(listview_wnd, &item);
 
-									action * a = g_actions[item.lParam];
-									if (a)
+									action* a = g_actions[item.lParam];
+									if(a)
 									{
-										uSetDlgItemText (wnd,IDC_E_KEY,a->get_key_name());
+										uSetDlgItemText(wnd, IDC_E_KEY, a->get_key_name());
 										return FALSE;
 									}
 								}
-								uSetDlgItemText (wnd,IDC_E_KEY,"");
+								uSetDlgItemText(wnd, IDC_E_KEY, "");
 
 							}
 							break;
@@ -657,36 +685,36 @@ public:
 						break;
 				}
 				break;
-				
+
 			case WM_COMMAND:
-				switch(wp) 
+				switch(wp)
 				{
-					case IDC_ENABLED | (BN_CLICKED<<16):
-						cfg_enabled = SendDlgItemMessage(wnd, IDC_ENABLED, BM_GETCHECK, 0, 0)==BST_CHECKED;
+					case IDC_ENABLED | (BN_CLICKED << 16) :
+						cfg_enabled = SendDlgItemMessage(wnd, IDC_ENABLED, BM_GETCHECK, 0, 0) == BST_CHECKED;
 						if(cfg_enabled)
 						{
 							init_windows_sockets();
-							enable_server_controls (true);
+							enable_server_controls(true);
 						}
 						else
 						{
 							disconnect_socket();
-							enable_server_controls (false);
+							enable_server_controls(false);
 							deinit_windows_sockets();
 						}
 						break;
 					case IDC_CONNECT:
-						if (lirc_socket != INVALID_SOCKET)
+						if(lirc_socket != INVALID_SOCKET)
 						{
-							uSetWindowText (GetDlgItem (wnd,IDC_CONNECT),"Connect");
+							uSetWindowText(GetDlgItem(wnd, IDC_CONNECT), "Connect");
 							disconnect_socket();
 						}
 						else
 						{
-							uSetWindowText (status_wnd,
+							uSetWindowText(status_wnd,
 								string_printf("Attempting connection to %s:%d",
-									cfg_lircaddr.get_ptr(),(int) cfg_lircport).get_ptr());
-							uSetWindowText (GetDlgItem (wnd,IDC_CONNECT),"Disconnect");
+									cfg_lircaddr.get_ptr(), (int)cfg_lircport).get_ptr());
+							uSetWindowText(GetDlgItem(wnd, IDC_CONNECT), "Disconnect");
 							start_lirc();
 						}
 						break;
@@ -695,25 +723,25 @@ public:
 						break;
 					case IDC_B_ADD:
 					{
-						stringLite selected_key,command;
-						uGetDlgItemText(wnd,IDC_E_KEY,selected_key);
-						if (selected_key.is_empty()) break;
+						stringLite selected_key, command;
+						uGetDlgItemText(wnd, IDC_E_KEY, selected_key);
+						if(selected_key.is_empty()) break;
 
-						uTreeView_GetText(action_listbox_wnd.getHandle(),action_listbox_wnd.getSelectedItem(),command);
-						g_actions.assign_command_to_key(selected_key,command);
+						uTreeView_GetText(action_listbox_wnd.getHandle(), action_listbox_wnd.getSelectedItem(), command);
+						g_actions.assign_command_to_key(selected_key, command);
 						update_listview(listview_wnd);
 
 						int key_idx = ListView_FindItemByKeyName(selected_key);
-						ListView_SetItemState(listview_wnd,key_idx,LVIS_FOCUSED|LVIS_SELECTED,LVIS_FOCUSED|LVIS_SELECTED);
-						ListView_EnsureVisible(listview_wnd,key_idx,0);
+						ListView_SetItemState(listview_wnd, key_idx, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+						ListView_EnsureVisible(listview_wnd, key_idx, 0);
 						SetFocus(listview_wnd);
-						
+
 						break;
 					}
 					case IDC_B_REMOVE:
 					{
 						int idx = ListView_GetSelectionMark(listview_wnd);
-						if (idx != -1)
+						if(idx != -1)
 						{
 							LVITEM item;
 							ZeroMemory(&item, sizeof(item));
@@ -722,9 +750,9 @@ public:
 							ListView_GetItem(listview_wnd, &item);
 
 							g_actions.delete_key_by_idx(item.lParam);
-							int top_idx = ListView_GetTopIndex (listview_wnd);
+							int top_idx = ListView_GetTopIndex(listview_wnd);
 							update_listview(listview_wnd);
-							ListView_EnsureVisible(listview_wnd,top_idx,0);
+							ListView_EnsureVisible(listview_wnd, top_idx, 0);
 							SetFocus(listview_wnd);
 						}
 						break;
@@ -733,61 +761,61 @@ public:
 						g_actions.reset();
 						update_listview(listview_wnd);
 						break;
-					case IDC_PORT | (EN_KILLFOCUS<<16):
-					case IDC_SERVER | (EN_KILLFOCUS<<16):
-					{
-						string8 tmp;
-						uGetWindowText((HWND) lp, tmp);
-						if ((wp & IDC_SERVER) == IDC_SERVER)
-							cfg_lircaddr = tmp.get_ptr();
-						else
-							cfg_lircport = atoi(tmp.get_ptr());
-						break;
-					}
-					case IDC_LB_ACTIONS | (LBN_SELCHANGE<<16):
-					{
-						string8* desc;
-						int idx = uSendMessage(action_listbox_wnd.getHandle(),LB_GETCURSEL,0,0);
-						desc = reinterpret_cast<string8*>(uSendMessage(action_listbox_wnd.getHandle(),LB_GETITEMDATA,idx,0));
-						if (desc)
-							uSetWindowText(GetDlgItem(wnd,IDC_DESC),*desc);
-						else
-							uSetWindowText(GetDlgItem(wnd,IDC_DESC),"");
-						break;
-					}
+						case IDC_PORT | (EN_KILLFOCUS << 16) :
+							case IDC_SERVER | (EN_KILLFOCUS << 16) :
+						{
+							string8 tmp;
+							uGetWindowText((HWND)lp, tmp);
+							if((wp & IDC_SERVER) == IDC_SERVER)
+								cfg_lircaddr = tmp.get_ptr();
+							else
+								cfg_lircport = atoi(tmp.get_ptr());
+							break;
+						}
+						case IDC_LB_ACTIONS | (LBN_SELCHANGE << 16) :
+						{
+							string8* desc;
+							int idx = uSendMessage(action_listbox_wnd.getHandle(), LB_GETCURSEL, 0, 0);
+							desc = reinterpret_cast<string8*>(uSendMessage(action_listbox_wnd.getHandle(), LB_GETITEMDATA, idx, 0));
+							if(desc)
+								uSetWindowText(GetDlgItem(wnd, IDC_DESC), *desc);
+							else
+								uSetWindowText(GetDlgItem(wnd, IDC_DESC), "");
+							break;
+						}
 				}
 				break;
 			case WM_REMOTE_KEY:
 			{
-				ListView_SetItemState(listview_wnd,-1,0,LVIS_SELECTED);
+				ListView_SetItemState(listview_wnd, -1, 0, LVIS_SELECTED);
 
-				char * tmp_name = reinterpret_cast<char *>(wp);
+				char* tmp_name = reinterpret_cast<char*>(wp);
 				stringLite key_name = tmp_name;
 				delete[] tmp_name;
-					
+
 				/* highlight whatever key was pressed (if it exists in the LV) */
 				int idx = ListView_FindItemByKeyName(key_name);
-				if (idx != -1)
+				if(idx != -1)
 				{
-					ListView_SetItemState(listview_wnd,idx,LVIS_FOCUSED|LVIS_SELECTED,LVIS_FOCUSED|LVIS_SELECTED);
-					ListView_EnsureVisible(listview_wnd,idx,true);
+					ListView_SetItemState(listview_wnd, idx, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+					ListView_EnsureVisible(listview_wnd, idx, true);
 					SetFocus(listview_wnd);
 				}
-				uSetDlgItemText(wnd,IDC_E_KEY,key_name);
+				uSetDlgItemText(wnd, IDC_E_KEY, key_name);
 				break;
-			} 
+			}
 			case WM_SOCKET:
 				switch(WSAGETSELECTEVENT(lp))
 				{
 					case FD_CONNECT:
 						uSetWindowText(status_wnd,
 							string_printf("Connected to %s:%d",
-								cfg_lircaddr.get_ptr(),(int) cfg_lircport).get_ptr());
-						uSetWindowText (GetDlgItem (wnd,IDC_CONNECT),"Disconnect");
+								cfg_lircaddr.get_ptr(), (int)cfg_lircport).get_ptr());
+						uSetWindowText(GetDlgItem(wnd, IDC_CONNECT), "Disconnect");
 						break;
 					case FD_CLOSE:
-						uSetWindowText(status_wnd,"Not connected.");
-						uSetWindowText (GetDlgItem (wnd,IDC_CONNECT),"Connect");
+						uSetWindowText(status_wnd, "Not connected.");
+						uSetWindowText(GetDlgItem(wnd, IDC_CONNECT), "Connect");
 						break;
 				}
 				break;
@@ -801,17 +829,17 @@ public:
 				cfg_lircport = atoi(buf.get_ptr());
 
 				string8* desc;
-				int num_items = uSendMessage(action_listbox_wnd.getHandle(),LB_GETCOUNT,0,0);
-				for (int i=0; i<num_items; i++)
+				int num_items = uSendMessage(action_listbox_wnd.getHandle(), LB_GETCOUNT, 0, 0);
+				for(int i = 0; i < num_items; i++)
 				{
-					desc = reinterpret_cast<string8*>(uSendMessage(action_listbox_wnd.getHandle(),LB_GETITEMDATA,i,0));
+					desc = reinterpret_cast<string8*>(uSendMessage(action_listbox_wnd.getHandle(), LB_GETITEMDATA, i, 0));
 					delete desc;
 				}
-				
+
 				break;
 			}
 		}
-		return 0;
+		return FALSE;
 	}
 
 	virtual HWND create(HWND parent)
@@ -819,7 +847,7 @@ public:
 		return uCreateDialog(IDD_CONFIG2, parent, ConfigProc, 0);
 	}
 
-	virtual const char * get_name()
+	virtual const char* get_name()
 	{
 		return "WinLIRC Client";
 	}
