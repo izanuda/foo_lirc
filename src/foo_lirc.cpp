@@ -15,7 +15,7 @@ DECLARE_COMPONENT_VERSION(
 	"for foobar2000 v0.9.x\n"
 	"update to 0.9.x SDK branch by wazoo\n"
 	"enhanced by phi\n\n"
-	"update to SDK 2022-08-10 by izanuda\n"
+	"update to SDK 2023-09-23 by izanuda\n"
 	"https://github.com/izanuda/foo_lirc\n\n"
 	"Original version copyright (C) 2004, Lev Shamardin\n"
 	"http://sourceforge.net/projects/foolirc\n"
